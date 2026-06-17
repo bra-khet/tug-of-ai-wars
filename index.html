@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tug of AI Wars</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-container">
+    <div class="canvas-wrap">
+      <canvas id="game-canvas" width="960" height="540"></canvas>
+
+      <div id="hud" class="hud hidden">
+        <span id="hud-enemy-castle">Enemy Castle: ---</span>
+        <span id="hud-agi" class="hidden">AGI Shield: ---</span>
+      </div>
+
+      <!-- Title / side select / game over overlays -->
+      <div id="overlay" class="overlay visible">
+      <div id="title-screen" class="screen active">
+        <h1>TUG OF AI WARS</h1>
+        <p class="subtitle">8-BIT CASTLE BATTLE</p>
+        <p class="hint">Choose your allegiance</p>
+        <div class="side-buttons">
+          <button id="btn-side-left" class="side-btn human-btn">
+            <span class="btn-title">HUMAN RESISTANCE</span>
+            <span class="btn-desc">Glaze + Nightshade Army</span>
+            <span class="btn-resource">Resource: Creativity</span>
+          </button>
+          <button id="btn-side-right" class="side-btn robot-btn">
+            <span class="btn-title">ROBOT LEGION</span>
+            <span class="btn-desc">AI Slop Army</span>
+            <span class="btn-resource">Resource: Compute</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="gameover-screen" class="screen">
+        <h1 id="gameover-title">VICTORY!</h1>
+        <p id="gameover-msg">The enemy castle has fallen.</p>
+        <button id="btn-play-again" class="action-btn">PLAY AGAIN</button>
+      </div>
+      </div>
+    </div>
+
+    <!-- In-game spawn UI (hidden until playing) -->
+    <div id="spawn-panel" class="spawn-panel hidden">
+      <div class="resource-bar">
+        <span id="resource-label">Creativity</span>:
+        <span id="resource-value">0</span>
+        <span class="resource-rate" id="resource-rate">(+0/s)</span>
+      </div>
+      <div id="spawn-buttons" class="spawn-buttons"></div>
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
