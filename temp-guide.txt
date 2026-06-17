@@ -1,0 +1,109 @@
+You are building a complete, self-contained, retro 8-bit style HTML5/JavaScript game that runs as a single static page (perfect for GitHub Pages). The project starts from a completely blank folder. Create index.html, style.css, and script.js (or a single well-organized index.html with embedded CSS/JS if you prefer extreme simplicity). No external dependencies, no build tools, no frameworks. Everything must be vanilla JavaScript + HTML5 Canvas.
+Game Concept: "Tug of AI Wars"
+Core Fantasy: A simple side-view tug-of-war castle battle. Two castles face each other on a flat battlefield. Units spawn from the left castle and the right castle, walk toward each other, and fight. The goal is to destroy the enemy castle while protecting your own.
+Player Choice: At the start screen the player picks a side:
+
+Left side (Anti-AI / Human Resistance): Glaze + Nightshade themed army (greens, oranges/browns, artistic/human feel).
+Right side (Pro-AI / Robot Legion): Robot/AI slop army (cyans, purples, mechanical feel).
+
+Once chosen, the player controls only that side using UI buttons to spend resources and spawn units. The opposite side is fully controlled by a simple deterministic AI script. The game logic must be symmetric so either side can be player-controlled or AI-controlled with minimal duplication.
+Visual Style (strictly retro 8-bit):
+
+Fixed canvas size (recommended 960×540 or 800×600 for classic feel).
+imageSmoothingEnabled = false.
+Solid block colors, chunky pixels, no gradients or anti-aliasing.
+Everything drawn with basic Canvas primitives (rects, circles, lines, text). No image files for the prototype.
+Very simple "pixel art" style: units are small colored rectangles or composed of a few rects (e.g., sword shape for melee, bow for ranged, cross/heart for support, skull/poison flask for assassin, gear/robot head for enemies).
+Two blocky pixel castles on left and right.
+Clean, readable retro UI (big chunky fonts, solid color panels).
+Health bars as simple colored rectangles above units and castles.
+Keep performance excellent — simple arrays of unit objects, requestAnimationFrame loop.
+
+Core Mechanics
+Resource System:
+
+One shared resource pool per side (call it "Creativity" for left side, "Compute" for right side, or just "Resources").
+Passive generation: +X per second (base tick rate, tunable).
+Glaze-style support units generate extra resources while they are alive and actively healing/buffing (small periodic bonus).
+Player spends resources to spawn units from their castle.
+On unit death: Refund 50% of the original cost back to the owning side immediately. This is a core balance mechanic from the start.
+
+Unit Behavior (both sides):
+
+Units have: cost, max HP, current HP, damage, attack range, attack cooldown, movement speed, and special properties.
+They walk in a straight line toward the enemy castle (simple 1D or very simple 2-lane system — start with one main battlefield lane for maximum simplicity, add a second lane later if it feels good).
+When in range of an enemy unit they stop and attack.
+When no enemies in range they continue toward the enemy castle.
+They can attack both enemy units and the enemy castle (castle has its own high HP pool).
+Nightshade-style glass cannons should do significantly higher damage to the enemy castle/structure than to units.
+
+Player Units (Left / Anti-AI side) — 4 types:
+
+Orc Warrior (basic meat shield) — Cheap, decent HP, low damage, short range. Good at soaking hits and protecting fragile units.
+Pencil Thrower (basic DPS) — Medium cost, lower HP than melee, good damage at range.
+Glaze Support (economy + defense) — Higher cost. Heals nearby allied units (small AoE heal or single target) and applies a simple damage reduction buff (or just healing is fine if easier). While actively healing/buffing it generates extra resources for its side. Weak in direct combat.
+Nightshade Assassin (glass cannon anti-structure) — High cost. Very high damage especially versus the enemy castle. Low HP, fragile if unsupported. Should feel weak when sent alone but devastating when protected by melee/ranged + Glaze buffs.
+
+Enemy Units (Right / Robot side) — 3-4 types, cheaper and individually weaker:
+Design them so matchups are non-transitive / interesting (rock-paper-scissors flavor). Examples you can use or modify:
+
+Cheap fast Agent Swarmer — Good at overwhelming Glaze supports or harassing.
+Armored Brute — Tankier, resistant to ranged but slower and weaker vs concentrated Nightshade burst.
+Data Miner — Applies a temporary debuff (reduces healing received or damage output), "steals" a small amount of resources on hit (don't decrement the other side, just add resources to the Data Miner's team)
+AGI: An ultimate final-boss upgrade - costs a fortune, but slowly damages the human base remotely.  Health is a "shield" over the robot base that absorbs incoming damage first; upon hitting zero, kills the AGI, then resumes damaging the robot base. Adds time pressure to Human-side players, or time-biding incentive to Robot-side players.
+
+The Robot side should feel like a cheaper spam army that can pressure through numbers and asymmetric tools, while the Human side has higher-quality units with stronger support and burst potential.  However, the human side is time-pressured to win before the robots can save up for an AGI upgrade.
+Trade-off & Strategy:
+
+Player must choose between spawning economy-enabling units (Glaze Support) vs pure combat units.
+Supports are weaker fighters but pay for themselves over time via extra resource generation + keeping your army alive longer.
+Nightshade Assassins are high-risk/high-reward — they need protection (Glaze + meat shields) to reach the castle and deal big structural damage.
+The 50% death refund makes aggressive plays less punishing and encourages experimenting with the fragile Nightshade units.
+
+Simple AI for the non-player side:
+
+The AI side also has a resource pool and ticks.
+Every few seconds it decides what to spawn based on current resources and a simple priority/weighting system (e.g., sometimes prioritize economy support, sometimes counter what the player is spamming, sometimes send a wave of cheap units).
+Keep the AI logic readable and tunable (one function or small object with weights).
+
+Game Loop & Win Condition:
+
+Game runs until one castle HP reaches 0.
+Clear win/lose screen with "Play Again" that resets everything.
+Optional: Simple "wave" feeling by having the AI occasionally save up and send bigger groups.
+
+Technical Requirements (keep it simple & clean)
+
+Use HTML5 <canvas> for the entire game view.
+Clean separation: game state, unit class/object, rendering, input, AI.
+Well-commented code. Small focused functions.
+All values (costs, stats, tick rates, refund %) should be easy to tweak in one place (constants object or top of script).
+Start with a clean title screen → side selection → game screen flow.
+Make the game fun and balanced enough to play for 5–10 minutes per session in the first working prototype.
+Performance: Target 60 FPS easily even with 30–50 units on screen.
+
+Development Order (follow this sequence)
+
+Foundation: Canvas setup, retro styling, title screen, side selection buttons, basic game state, resource tick for both sides.
+Core Movement & Combat: Spawn a test unit from left, make it walk right, add simple collision/attack with a test enemy unit, health, death, 50% refund.
+Player Unit Types: Implement all 4 left-side units with their costs and special behaviors (especially Glaze healing/buff + resource gen, and Nightshade high castle damage).
+Enemy Unit Types + AI Spawner: Add 3-4 right-side units and a simple periodic AI spawning function with basic decision making.
+Full Symmetry + Side Choice: Make sure the exact same logic works when player controls the right side instead. Polish the side selection flow.
+Polish & Balance: Retro visuals, health bars, simple floating text or effects if easy, UI buttons with costs and short descriptions, win/lose screen, easy stat tuning.
+Final touches: README.md with how to run locally and deploy to GitHub Pages. Make sure it works when opened directly as index.html.
+
+Success Criteria for First Playable Prototype
+
+Player can choose a side.
+Both sides generate resources over time.
+Player can spend resources to spawn their 4 unit types.
+Units walk, fight, die, and refund 50% cost.
+Glaze supports visibly help keep allies alive and generate extra resources.
+Nightshade units can noticeably chunk the enemy castle when they reach it.
+Opposite side is spawning units via simple AI.
+Game ends when one castle dies.
+Looks and feels deliberately retro and simple (chunky pixels, solid colors).
+
+Begin immediately. Create the files, set up the canvas and game loop first, then iterate through the phases above. After each major phase, make a short comment in the code or a quick console note so progress is clear. Prioritize getting a fun, playable loop quickly over perfect visuals.
+Once the core loop works, we can tune numbers, add a second lane, improve AI, or add small visual flair together.
+Start building now.
