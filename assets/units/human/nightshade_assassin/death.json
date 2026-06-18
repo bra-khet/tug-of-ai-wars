@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "sheetType": "death",
+  "unitKey": "nightshade_assassin",
+  "faction": "human",
+  "image": "death.png",
+  "sheet": {
+    "width": 468,
+    "height": 52
+  },
+  "frame": {
+    "width": 78,
+    "height": 52
+  },
+  "layout": "horizontal",
+  "anchor": {
+    "x": 39,
+    "y": 52
+  },
+  "frames": {
+    "idle": { "x": 0, "y": 0, "w": 78, "h": 52, "duration": 80 },
+    "death1": { "x": 78, "y": 0, "w": 78, "h": 52, "duration": 120 },
+    "death2": { "x": 156, "y": 0, "w": 78, "h": 52, "duration": 120 },
+    "death3": { "x": 234, "y": 0, "w": 78, "h": 52, "duration": 120 },
+    "death4": { "x": 312, "y": 0, "w": 78, "h": 52, "duration": 120 },
+    "death5": { "x": 390, "y": 0, "w": 78, "h": 52, "duration": 400 }
+  },
+  "animations": {
+    "death": {
+      "frames": ["idle", "death1", "death2", "death3", "death4", "death5"],
+      "loop": false,
+      "holdLastFrame": true
+    }
+  }
+}

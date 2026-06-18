@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "faction": "human",
+  "units": {
+    "orc_warrior": {
+      "combat": "orc_warrior/combat.json",
+      "death": "orc_warrior/death.json"
+    },
+    "pencil_thrower": {
+      "combat": "pencil_thrower/combat.json",
+      "death": "pencil_thrower/death.json"
+    },
+    "glaze_support": {
+      "combat": "glaze_support/combat.json",
+      "death": "glaze_support/death.json"
+    },
+    "nightshade_assassin": {
+      "combat": "nightshade_assassin/combat.json",
+      "death": "nightshade_assassin/death.json"
+    }
+  }
+}

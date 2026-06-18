@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "sheetType": "combat",
+  "unitKey": "glaze_support",
+  "faction": "human",
+  "image": "combat.png",
+  "sheet": {
+    "width": 372,
+    "height": 62
+  },
+  "frame": {
+    "width": 62,
+    "height": 62
+  },
+  "layout": "horizontal",
+  "anchor": {
+    "x": 31,
+    "y": 62
+  },
+  "frames": {
+    "idle": { "x": 0, "y": 0, "w": 62, "h": 62, "duration": 120 },
+    "walk1": { "x": 62, "y": 0, "w": 62, "h": 62, "duration": 120 },
+    "walk2": { "x": 124, "y": 0, "w": 62, "h": 62, "duration": 120 },
+    "attack1": { "x": 186, "y": 0, "w": 62, "h": 62, "duration": 100 },
+    "attack2": { "x": 248, "y": 0, "w": 62, "h": 62, "duration": 100 },
+    "attack3": { "x": 310, "y": 0, "w": 62, "h": 62, "duration": 100 }
+  },
+  "animations": {
+    "idle": { "frames": ["idle"], "loop": true },
+    "walk": { "frames": ["walk1", "walk2"], "loop": true },
+    "attack": { "frames": ["attack1", "attack2", "attack3"], "loop": false }
+  }
+}

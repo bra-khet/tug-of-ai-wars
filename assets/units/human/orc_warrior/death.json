@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "sheetType": "death",
+  "unitKey": "orc_warrior",
+  "faction": "human",
+  "image": "death.png",
+  "sheet": {
+    "width": 480,
+    "height": 80
+  },
+  "frame": {
+    "width": 80,
+    "height": 80
+  },
+  "layout": "horizontal",
+  "anchor": {
+    "x": 40,
+    "y": 80
+  },
+  "frames": {
+    "idle": { "x": 0, "y": 0, "w": 80, "h": 80, "duration": 80 },
+    "death1": { "x": 80, "y": 0, "w": 80, "h": 80, "duration": 120 },
+    "death2": { "x": 160, "y": 0, "w": 80, "h": 80, "duration": 120 },
+    "death3": { "x": 240, "y": 0, "w": 80, "h": 80, "duration": 120 },
+    "death4": { "x": 320, "y": 0, "w": 80, "h": 80, "duration": 120 },
+    "death5": { "x": 400, "y": 0, "w": 80, "h": 80, "duration": 400 }
+  },
+  "animations": {
+    "death": {
+      "frames": ["idle", "death1", "death2", "death3", "death4", "death5"],
+      "loop": false,
+      "holdLastFrame": true
+    }
+  }
+}

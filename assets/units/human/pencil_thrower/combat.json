@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "sheetType": "combat",
+  "unitKey": "pencil_thrower",
+  "faction": "human",
+  "image": "combat.png",
+  "sheet": {
+    "width": 444,
+    "height": 74
+  },
+  "frame": {
+    "width": 74,
+    "height": 74
+  },
+  "layout": "horizontal",
+  "anchor": {
+    "x": 37,
+    "y": 74
+  },
+  "frames": {
+    "idle": { "x": 0, "y": 0, "w": 74, "h": 74, "duration": 120 },
+    "walk1": { "x": 74, "y": 0, "w": 74, "h": 74, "duration": 120 },
+    "walk2": { "x": 148, "y": 0, "w": 74, "h": 74, "duration": 120 },
+    "attack1": { "x": 222, "y": 0, "w": 74, "h": 74, "duration": 80 },
+    "attack2": { "x": 296, "y": 0, "w": 74, "h": 74, "duration": 80 },
+    "attack3": { "x": 370, "y": 0, "w": 74, "h": 74, "duration": 80 }
+  },
+  "animations": {
+    "idle": { "frames": ["idle"], "loop": true },
+    "walk": { "frames": ["walk1", "walk2"], "loop": true },
+    "attack": { "frames": ["attack1", "attack2", "attack3"], "loop": false }
+  }
+}

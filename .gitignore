@@ -40,13 +40,9 @@ experiments/autobahn/reports/
 tmp*/
 
 # GUI and experiment outputs (user-generated, personal data, large)
-asciline_outputs/
-videos/*
+.ignore/
+
 # Windows local path mapping (contains full filesystem path - privacy)
-.windows_cwd.txt
-*.log
-gradio_cached_examples/
-.gradio/
 # Any local config or env overrides
 .env.local
 .local_root*

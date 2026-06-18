@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "sheetType": "death",
+  "unitKey": "glaze_support",
+  "faction": "human",
+  "image": "death.png",
+  "sheet": {
+    "width": 372,
+    "height": 62
+  },
+  "frame": {
+    "width": 62,
+    "height": 62
+  },
+  "layout": "horizontal",
+  "anchor": {
+    "x": 31,
+    "y": 62
+  },
+  "frames": {
+    "idle": { "x": 0, "y": 0, "w": 62, "h": 62, "duration": 80 },
+    "death1": { "x": 62, "y": 0, "w": 62, "h": 62, "duration": 120 },
+    "death2": { "x": 124, "y": 0, "w": 62, "h": 62, "duration": 120 },
+    "death3": { "x": 186, "y": 0, "w": 62, "h": 62, "duration": 120 },
+    "death4": { "x": 248, "y": 0, "w": 62, "h": 62, "duration": 120 },
+    "death5": { "x": 310, "y": 0, "w": 62, "h": 62, "duration": 400 }
+  },
+  "animations": {
+    "death": {
+      "frames": ["idle", "death1", "death2", "death3", "death4", "death5"],
+      "loop": false,
+      "holdLastFrame": true
+    }
+  }
+}

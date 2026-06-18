@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "sheetType": "combat",
+  "unitKey": "nightshade_assassin",
+  "faction": "human",
+  "image": "combat.png",
+  "sheet": {
+    "width": 468,
+    "height": 52
+  },
+  "frame": {
+    "width": 78,
+    "height": 52
+  },
+  "layout": "horizontal",
+  "anchor": {
+    "x": 39,
+    "y": 52
+  },
+  "frames": {
+    "idle": { "x": 0, "y": 0, "w": 78, "h": 52, "duration": 120 },
+    "walk1": { "x": 78, "y": 0, "w": 78, "h": 52, "duration": 120 },
+    "walk2": { "x": 156, "y": 0, "w": 78, "h": 52, "duration": 120 },
+    "attack1": { "x": 234, "y": 0, "w": 78, "h": 52, "duration": 80 },
+    "attack2": { "x": 312, "y": 0, "w": 78, "h": 52, "duration": 80 },
+    "attack3": { "x": 390, "y": 0, "w": 78, "h": 52, "duration": 80 }
+  },
+  "animations": {
+    "idle": { "frames": ["idle"], "loop": true },
+    "walk": { "frames": ["walk1", "walk2"], "loop": true },
+    "attack": { "frames": ["attack1", "attack2", "attack3"], "loop": false }
+  }
+}

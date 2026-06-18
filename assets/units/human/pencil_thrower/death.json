@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "sheetType": "death",
+  "unitKey": "pencil_thrower",
+  "faction": "human",
+  "image": "death.png",
+  "sheet": {
+    "width": 444,
+    "height": 74
+  },
+  "frame": {
+    "width": 74,
+    "height": 74
+  },
+  "layout": "horizontal",
+  "anchor": {
+    "x": 37,
+    "y": 74
+  },
+  "frames": {
+    "idle": { "x": 0, "y": 0, "w": 74, "h": 74, "duration": 80 },
+    "death1": { "x": 74, "y": 0, "w": 74, "h": 74, "duration": 120 },
+    "death2": { "x": 148, "y": 0, "w": 74, "h": 74, "duration": 120 },
+    "death3": { "x": 222, "y": 0, "w": 74, "h": 74, "duration": 120 },
+    "death4": { "x": 296, "y": 0, "w": 74, "h": 74, "duration": 120 },
+    "death5": { "x": 370, "y": 0, "w": 74, "h": 74, "duration": 400 }
+  },
+  "animations": {
+    "death": {
+      "frames": ["idle", "death1", "death2", "death3", "death4", "death5"],
+      "loop": false,
+      "holdLastFrame": true
+    }
+  }
+}
