@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "faction": "robot",
+  "base": "base/base.json",
+  "units": {
+    "agent_swarmer": {
+      "combat": "agent_swarmer/combat.json",
+      "death": "agent_swarmer/death.json"
+    },
+    "armored_brute": {
+      "combat": "armored_brute/combat.json",
+      "death": "armored_brute/death.json"
+    },
+    "data_miner": {
+      "combat": "data_miner/combat.json",
+      "death": "data_miner/death.json"
+    },
+    "agi": {
+      "combat": "agi/combat.json"
+    }
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "sheetType": "base",
+  "faction": "human",
+  "image": "base.png",
+  "sheet": {
+    "width": 960,
+    "height": 480
+  },
+  "frame": {
+    "width": 160,
+    "height": 160
+  },
+  "layout": "grid",
+  "columns": 6,
+  "rows": 3,
+  "anchor": {
+    "x": 80,
+    "y": 160
+  },
+  "frames": {
+    "healthy1": { "x": 0, "y": 0, "w": 160, "h": 160, "duration": 100 },
+    "healthy2": { "x": 160, "y": 0, "w": 160, "h": 160, "duration": 100 },
+    "healthy3": { "x": 320, "y": 0, "w": 160, "h": 160, "duration": 100 },
+    "healthy4": { "x": 480, "y": 0, "w": 160, "h": 160, "duration": 100 },
+    "healthy5": { "x": 640, "y": 0, "w": 160, "h": 160, "duration": 100 },
+    "healthy6": { "x": 800, "y": 0, "w": 160, "h": 160, "duration": 100 },
+    "damaged1": { "x": 0, "y": 160, "w": 160, "h": 160, "duration": 100 },
+    "damaged2": { "x": 160, "y": 160, "w": 160, "h": 160, "duration": 100 },
+    "damaged3": { "x": 320, "y": 160, "w": 160, "h": 160, "duration": 100 },
+    "damaged4": { "x": 480, "y": 160, "w": 160, "h": 160, "duration": 100 },
+    "damaged5": { "x": 640, "y": 160, "w": 160, "h": 160, "duration": 100 },
+    "damaged6": { "x": 800, "y": 160, "w": 160, "h": 160, "duration": 100 },
+    "death1": { "x": 0, "y": 320, "w": 160, "h": 160, "duration": 100 },
+    "death2": { "x": 160, "y": 320, "w": 160, "h": 160, "duration": 100 },
+    "death3": { "x": 320, "y": 320, "w": 160, "h": 160, "duration": 100 },
+    "death4": { "x": 480, "y": 320, "w": 160, "h": 160, "duration": 100 },
+    "death5": { "x": 640, "y": 320, "w": 160, "h": 160, "duration": 100 },
+    "death6": { "x": 800, "y": 320, "w": 160, "h": 160, "duration": 100 }
+  },
+  "animations": {
+    "healthy": {
+      "frames": ["healthy1", "healthy2", "healthy3", "healthy4", "healthy5", "healthy6"],
+      "loop": true
+    },
+    "damaged": {
+      "frames": ["damaged1", "damaged2", "damaged3", "damaged4", "damaged5", "damaged6"],
+      "loop": true
+    },
+    "death": {
+      "frames": ["death1", "death2", "death3", "death4", "death5", "death6"],
+      "loop": false,
+      "holdLastFrame": true
+    }
+  }
+}

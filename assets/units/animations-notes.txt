@@ -1,0 +1,16 @@
+*For all combat animations* EXCEPT robot-unit4-combat:
+
+Frame 1 is idle/beginning, frame 2 is walk1, and frame 3 is walk2.  A walk animation draw function should alternate slowly/retro-syle, like this:
+
+Idle - Walk1 - Idle - Walk2 - Idle - Walk1 - Idle - Walk2 - Idle - etc... with out 200ms delay between frames
+
+The attack combat animation starts at frame 4 and ends at the frame 6.  Draw once quickly upon attack animation, about 100ms between frames.
+
+*For all death animations*: Draw all frames, ~100ms between each.
+
+*For robot-unit4-combat*: Draw all 6 frames with 200 ms delay - the unit is stationary at the base and has no walk.
+
+
+*For BASE animations*: Draw all 6 frames from row 1 and 2 normally (100ms).  Row 1 is the base at full health until ~50%.  Row 2 is the base from 50% health to dead.  Row 3 is the Death animation for the building: draw all six frames at normal speed (100ms delay).
+
+Make note of animation frame Delay differences throughout the project. The two variants are the normal and slow, which is 100 millisecond delay between frames and 200 millisecond delay between frames. In other words, the slow speed is 5 fps, and the normal speed is 10 fps, for a classic retro 8bit arcade feel.

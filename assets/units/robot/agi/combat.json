@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "sheetType": "combat",
+  "unitKey": "agi",
+  "faction": "robot",
+  "image": "combat.png",
+  "sheet": {
+    "width": 480,
+    "height": 80
+  },
+  "frame": {
+    "width": 80,
+    "height": 80
+  },
+  "layout": "horizontal",
+  "anchor": {
+    "x": 40,
+    "y": 80
+  },
+  "frames": {
+    "pulse1": { "x": 0, "y": 0, "w": 80, "h": 80, "duration": 200 },
+    "pulse2": { "x": 80, "y": 0, "w": 80, "h": 80, "duration": 200 },
+    "pulse3": { "x": 160, "y": 0, "w": 80, "h": 80, "duration": 200 },
+    "pulse4": { "x": 240, "y": 0, "w": 80, "h": 80, "duration": 200 },
+    "pulse5": { "x": 320, "y": 0, "w": 80, "h": 80, "duration": 200 },
+    "pulse6": { "x": 400, "y": 0, "w": 80, "h": 80, "duration": 200 }
+  },
+  "animations": {
+    "idle": {
+      "frames": ["pulse1", "pulse2", "pulse3", "pulse4", "pulse5", "pulse6"],
+      "loop": true
+    }
+  }
+}

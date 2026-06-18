@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "sheetType": "combat",
+  "unitKey": "armored_brute",
+  "faction": "robot",
+  "image": "combat.png",
+  "sheet": {
+    "width": 480,
+    "height": 64
+  },
+  "frame": {
+    "width": 80,
+    "height": 64
+  },
+  "layout": "horizontal",
+  "anchor": {
+    "x": 40,
+    "y": 64
+  },
+  "frames": {
+    "idle": { "x": 0, "y": 0, "w": 80, "h": 64, "duration": 200 },
+    "walk1": { "x": 80, "y": 0, "w": 80, "h": 64, "duration": 200 },
+    "walk2": { "x": 160, "y": 0, "w": 80, "h": 64, "duration": 200 },
+    "attack1": { "x": 240, "y": 0, "w": 80, "h": 64, "duration": 100 },
+    "attack2": { "x": 320, "y": 0, "w": 80, "h": 64, "duration": 100 },
+    "attack3": { "x": 400, "y": 0, "w": 80, "h": 64, "duration": 100 }
+  },
+  "animations": {
+    "idle": { "frames": ["idle"], "loop": true },
+    "walk": { "frames": ["idle", "walk1", "idle", "walk2"], "loop": true },
+    "attack": { "frames": ["attack1", "attack2", "attack3"], "loop": false }
+  }
+}

@@ -198,6 +198,199 @@ const UNIT_CATALOG = {
 const SIDE = { LEFT: 'left', RIGHT: 'right' };
 const FACTION = { human: 'human', robot: 'robot' };
 
+const SPRITE_ROOT = 'assets/units';
+
+// =============================================================================
+// SPRITE ASSETS — sheet metadata + image loading
+// =============================================================================
+const spriteStore = {
+  human: { manifest: null, sheets: {}, base: null },
+  robot: { manifest: null, sheets: {}, base: null },
+};
+
+const castleSpriteAnim = {
+  left: { anim: 'healthy', frameIndex: 0, elapsed: 0 },
+  right: { anim: 'healthy', frameIndex: 0, elapsed: 0 },
+};
+
+let spritesReady = false;
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+    img.src = src;
+  });
+}
+
+function sheetImagePath(faction, jsonPath, imageFile) {
+  const dir = jsonPath.includes('/') ? jsonPath.replace(/\/[^/]+$/, '/') : '';
+  return `${SPRITE_ROOT}/${faction}/${dir}${imageFile}`;
+}
+
+async function loadSheetMeta(faction, jsonPath) {
+  const res = await fetch(`${SPRITE_ROOT}/${faction}/${jsonPath}`);
+  if (!res.ok) throw new Error(`Missing sprite meta: ${faction}/${jsonPath}`);
+  const meta = await res.json();
+  const image = await loadImage(sheetImagePath(faction, jsonPath, meta.image));
+  return { ...meta, imageEl: image, jsonPath };
+}
+
+async function loadFactionSprites(faction) {
+  const manifestRes = await fetch(`${SPRITE_ROOT}/${faction}/manifest.json`);
+  if (!manifestRes.ok) throw new Error(`Missing manifest: ${faction}`);
+  const manifest = await manifestRes.json();
+  spriteStore[faction].manifest = manifest;
+
+  if (manifest.base) {
+    spriteStore[faction].base = await loadSheetMeta(faction, manifest.base);
+  }
+
+  for (const [unitKey, paths] of Object.entries(manifest.units)) {
+    for (const [sheetType, jsonPath] of Object.entries(paths)) {
+      const meta = await loadSheetMeta(faction, jsonPath);
+      spriteStore[faction].sheets[`${unitKey}:${sheetType}`] = meta;
+    }
+  }
+}
+
+async function loadAllSprites() {
+  try {
+    await Promise.all([loadFactionSprites(FACTION.human), loadFactionSprites(FACTION.robot)]);
+    spritesReady = true;
+    console.log('[SPRITES] Loaded human + robot unit and base sheets');
+  } catch (err) {
+    console.warn('[SPRITES] Load failed — using placeholder shapes', err);
+  }
+}
+
+function getUnitSheet(unit, sheetType) {
+  return spriteStore[unit.faction]?.sheets[`${unit.typeKey}:${sheetType}`] || null;
+}
+
+function createUnitSpriteState(unit) {
+  return {
+    anim: unit.isAgi ? 'idle' : 'walk',
+    sheetType: 'combat',
+    frameIndex: 0,
+    elapsed: 0,
+    attackPlaying: false,
+    dying: false,
+    deathDone: false,
+  };
+}
+
+function advanceSpriteAnim(animState, meta, animName, dt) {
+  const animation = meta.animations[animName];
+  if (!animation) return 'missing';
+
+  const frameKeys = animation.frames;
+  const frameKey = frameKeys[animState.frameIndex];
+  const frame = meta.frames[frameKey];
+  if (!frame) return 'missing';
+
+  animState.elapsed += dt * 1000;
+  if (animState.elapsed < frame.duration) return 'playing';
+
+  animState.elapsed -= frame.duration;
+  animState.frameIndex += 1;
+
+  if (animState.frameIndex < frameKeys.length) return 'playing';
+
+  if (animation.loop) {
+    animState.frameIndex = 0;
+    return 'playing';
+  }
+
+  if (animation.holdLastFrame) {
+    animState.frameIndex = frameKeys.length - 1;
+  }
+  return 'done';
+}
+
+function resolveUnitAnimName(unit) {
+  if (unit.sprite.dying) return 'death';
+  if (unit.sprite.attackPlaying) return 'attack';
+  if (unit.isAgi) return 'idle';
+  if (unit.targetId != null) return 'idle';
+  const dir = directionForSide(unit.side);
+  const enemy = enemySide(unit.side);
+  const castleEdge = enemy === SIDE.LEFT
+    ? CONFIG.castle.leftX + CONFIG.castle.width
+    : CONFIG.castle.rightX;
+  const moving = Math.abs(unit.x - castleEdge) > unit.range;
+  return moving ? 'walk' : 'idle';
+}
+
+function updateUnitSprite(unit, dt) {
+  if (!spritesReady) return;
+
+  const sheetType = unit.sprite.dying ? 'death' : 'combat';
+  const meta = getUnitSheet(unit, sheetType);
+  if (!meta) return;
+
+  const animName = resolveUnitAnimName(unit);
+  if (unit.sprite.anim !== animName && !unit.sprite.dying) {
+    unit.sprite.anim = animName;
+    unit.sprite.frameIndex = 0;
+    unit.sprite.elapsed = 0;
+    if (animName === 'attack') unit.sprite.attackPlaying = true;
+  }
+
+  const status = advanceSpriteAnim(unit.sprite, meta, unit.sprite.anim, dt);
+  if (status === 'done' && unit.sprite.dying) {
+    unit.sprite.deathDone = true;
+  } else if (status === 'done' && unit.sprite.attackPlaying) {
+    unit.sprite.attackPlaying = false;
+    unit.sprite.anim = resolveUnitAnimName(unit);
+    unit.sprite.frameIndex = 0;
+    unit.sprite.elapsed = 0;
+  }
+}
+
+function updateCastleSpriteAnim(side, dt) {
+  if (!spritesReady) return;
+  const faction = factionForSide(side);
+  const meta = spriteStore[faction].base;
+  if (!meta) return;
+
+  const castle = state.castles[side];
+  const animState = castleSpriteAnim[side];
+  let targetAnim = 'healthy';
+  if (castle.hp <= 0) targetAnim = 'death';
+  else if (castle.hp / castle.maxHp <= 0.5) targetAnim = 'damaged';
+
+  if (animState.anim !== targetAnim) {
+    animState.anim = targetAnim;
+    animState.frameIndex = 0;
+    animState.elapsed = 0;
+  }
+
+  advanceSpriteAnim(animState, meta, animState.anim, dt);
+}
+
+function drawSpriteFrame(image, frame, anchor, worldX, worldY, flipH) {
+  const drawY = Math.round(worldY - anchor.y);
+  ctx.save();
+  if (flipH) {
+    ctx.translate(Math.round(worldX), 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(
+      image,
+      frame.x, frame.y, frame.w, frame.h,
+      Math.round(-anchor.x), drawY, frame.w, frame.h
+    );
+  } else {
+    ctx.drawImage(
+      image,
+      frame.x, frame.y, frame.w, frame.h,
+      Math.round(worldX - anchor.x), drawY, frame.w, frame.h
+    );
+  }
+  ctx.restore();
+}
+
 // =============================================================================
 // DOM & CANVAS SETUP — PHASE 1
 // =============================================================================
@@ -275,6 +468,8 @@ function resetGame() {
   state.aiTimer = 0;
   floatingTexts = [];
   unitIdCounter = 0;
+  castleSpriteAnim.left = { anim: 'healthy', frameIndex: 0, elapsed: 0 };
+  castleSpriteAnim.right = { anim: 'healthy', frameIndex: 0, elapsed: 0 };
 }
 
 function startGame(chosenSide) {
@@ -345,9 +540,16 @@ function createUnit(side, typeKey) {
   };
 
   if (unit.isAgi) {
-    unit.x = side === SIDE.LEFT ? CONFIG.castle.leftX + 20 : CONFIG.castle.rightX + 40;
-    // AGI shield overlays castle
+    unit.x = side === SIDE.LEFT ? CONFIG.castle.leftX + 36 : CONFIG.castle.rightX + 36;
+    unit.y = CONFIG.castle.groundY;
     state.castles[side].agiShield = unit.agiShield;
+  }
+
+  unit.sprite = createUnitSpriteState(unit);
+  const combatSheet = getUnitSheet(unit, 'combat');
+  if (combatSheet) {
+    unit.width = combatSheet.frame.width;
+    unit.height = combatSheet.frame.height;
   }
 
   return unit;
@@ -491,6 +693,16 @@ function killUnit(unit, killer) {
 
   if (unit.isAgi) {
     state.castles[unit.side].agiShield = 0;
+    unit.sprite.deathDone = true;
+  } else if (getUnitSheet(unit, 'death')) {
+    unit.sprite.dying = true;
+    unit.sprite.sheetType = 'death';
+    unit.sprite.anim = 'death';
+    unit.sprite.frameIndex = 0;
+    unit.sprite.elapsed = 0;
+    unit.sprite.attackPlaying = false;
+  } else {
+    unit.sprite.deathDone = true;
   }
 }
 
@@ -499,6 +711,12 @@ function attackUnit(attacker, target, dt) {
   if (attacker.attackTimer > 0) return;
 
   attacker.attackTimer = attacker.attackCooldown;
+  if (attacker.sprite && getUnitSheet(attacker, 'combat')?.animations.attack) {
+    attacker.sprite.attackPlaying = true;
+    attacker.sprite.anim = 'attack';
+    attacker.sprite.frameIndex = 0;
+    attacker.sprite.elapsed = 0;
+  }
   let dmg = attacker.damage;
 
   // Assassins are weaker vs units (use base damage, not castleDamage)
@@ -757,28 +975,37 @@ function drawCastle(side) {
   const faction = factionForSide(side);
   const palette = faction === FACTION.human ? CONFIG.colors.human : CONFIG.colors.robot;
   const castle = state.castles[side];
+  const centerX = x + c.width / 2;
+  const baseMeta = spriteStore[faction].base;
 
-  // Base blocks
-  ctx.fillStyle = palette.castle;
-  ctx.fillRect(x, c.groundY - c.height, c.width, c.height);
-  // Battlements
-  ctx.fillStyle = palette.castleTop;
-  for (let i = 0; i < 5; i++) {
-    const bx = x + i * 15;
-    ctx.fillRect(bx, c.groundY - c.height - 12, 12, 12);
+  if (spritesReady && baseMeta) {
+    const animState = castleSpriteAnim[side];
+    const animation = baseMeta.animations[animState.anim];
+    const frameKey = animation.frames[animState.frameIndex];
+    const frame = baseMeta.frames[frameKey];
+    drawSpriteFrame(baseMeta.imageEl, frame, baseMeta.anchor, centerX, c.groundY, false);
+  } else {
+    ctx.fillStyle = palette.castle;
+    ctx.fillRect(x, c.groundY - c.height, c.width, c.height);
+    ctx.fillStyle = palette.castleTop;
+    for (let i = 0; i < 5; i++) {
+      const bx = x + i * 15;
+      ctx.fillRect(bx, c.groundY - c.height - 12, 12, 12);
+    }
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(x + c.width / 2 - 10, c.groundY - 30, 20, 30);
   }
-  // Door
-  ctx.fillStyle = '#1a1a1a';
-  ctx.fillRect(x + c.width / 2 - 10, c.groundY - 30, 20, 30);
 
-  // AGI shield glow
   if (castle.agiShield > 0) {
     ctx.strokeStyle = '#e040fb';
     ctx.lineWidth = 3;
     ctx.strokeRect(x - 6, c.groundY - c.height - 18, c.width + 12, c.height + 24);
   }
 
-  drawHealthBar(x + c.width / 2, c.groundY - c.height - 22, c.width, castle.hp, castle.maxHp);
+  const barY = spritesReady && baseMeta
+    ? c.groundY - baseMeta.frame.height - 8
+    : c.groundY - c.height - 22;
+  drawHealthBar(centerX, barY, c.width, castle.hp, castle.maxHp);
 }
 
 function drawGround() {
@@ -799,69 +1026,95 @@ function drawGround() {
   ctx.fillRect(0, CONFIG.lane.y + 14, width, 4);
 }
 
-function drawUnit(unit) {
-  if (!unit.alive) return;
+function drawUnitPlaceholder(unit) {
   const faction = unit.faction;
   const palette = faction === FACTION.human ? CONFIG.colors.human : CONFIG.colors.robot;
   const x = Math.round(unit.x) - unit.width / 2;
   const y = Math.round(unit.y) - unit.height;
 
-  ctx.save();
-  if (unit.side === SIDE.RIGHT) {
-    // flip visual by drawing mirrored offsets — keep simple: same shapes, different colors
-  }
-
-  // Body
   ctx.fillStyle = palette.primary;
   ctx.fillRect(x, y + 8, unit.width, unit.height - 8);
 
-  // Role-specific pixel details
   const role = unit.def.role;
   if (role === 'melee' || role === 'tank') {
     ctx.fillStyle = palette.secondary;
-    ctx.fillRect(x + 14, y, 4, 14); // sword / armor spike
+    ctx.fillRect(x + 14, y, 4, 14);
     ctx.fillRect(x + 2, y + 10, 16, 4);
   } else if (role === 'ranged') {
     ctx.fillStyle = palette.accent;
     ctx.fillRect(x + 2, y + 4, 16, 3);
-    ctx.fillRect(x + 16, y + 2, 3, 10); // pencil/bow
+    ctx.fillRect(x + 16, y + 2, 3, 10);
   } else if (role === 'support') {
     ctx.fillStyle = '#fff';
     ctx.fillRect(x + 6, y + 2, 8, 8);
     ctx.fillStyle = '#e91e63';
-    ctx.fillRect(x + 8, y + 4, 4, 6); // cross
+    ctx.fillRect(x + 8, y + 4, 4, 6);
     ctx.fillRect(x + 6, y + 6, 8, 2);
   } else if (role === 'assassin') {
     ctx.fillStyle = '#4a148c';
     ctx.fillRect(x + 4, y, 12, 10);
     ctx.fillStyle = '#76ff03';
     ctx.fillRect(x + 7, y + 3, 2, 2);
-    ctx.fillRect(x + 11, y + 3, 2, 2); // skull eyes
+    ctx.fillRect(x + 11, y + 3, 2, 2);
   } else if (role === 'swarm') {
     ctx.fillStyle = palette.secondary;
     ctx.fillRect(x + 4, y + 4, 12, 6);
   } else if (role === 'debuffer') {
     ctx.fillStyle = '#7b1fa2';
-    ctx.fillRect(x + 6, y + 2, 8, 10); // flask
+    ctx.fillRect(x + 6, y + 2, 8, 10);
     ctx.fillRect(x + 8, y, 4, 4);
   } else if (role === 'agi') {
     ctx.fillStyle = '#e040fb';
     ctx.fillRect(x, y, unit.width, unit.height);
     ctx.fillStyle = '#fff';
     ctx.fillRect(x + 4, y + 6, 12, 4);
-    ctx.fillRect(x + 6, y + 4, 8, 8); // robot face
+    ctx.fillRect(x + 6, y + 4, 8, 8);
+  }
+}
+
+function drawUnit(unit) {
+  if (!unit.alive && !unit.sprite?.dying) return;
+
+  const sheetType = unit.sprite?.dying ? 'death' : 'combat';
+  const meta = getUnitSheet(unit, sheetType);
+  let drewSprite = false;
+
+  if (spritesReady && meta && unit.sprite) {
+    const animation = meta.animations[unit.sprite.anim];
+    if (animation) {
+      const frameKey = animation.frames[unit.sprite.frameIndex];
+      const frame = meta.frames[frameKey];
+      if (frame) {
+        drawSpriteFrame(
+          meta.imageEl,
+          frame,
+          meta.anchor,
+          unit.x,
+          unit.y,
+          unit.side === SIDE.RIGHT
+        );
+        drewSprite = true;
+      }
+    }
   }
 
-  drawHealthBar(unit.x, y - 6, unit.width, unit.hp, unit.maxHp);
-
-  // Debuff indicator
-  const now = performance.now();
-  if (unit.debuffs.some(d => d.until > now)) {
-    ctx.fillStyle = '#9c27b0';
-    ctx.fillRect(x, y - 12, 6, 6);
+  if (!drewSprite && unit.alive) {
+    drawUnitPlaceholder(unit);
   }
 
-  ctx.restore();
+  if (unit.alive) {
+    const barY = drewSprite && meta
+      ? unit.y - meta.frame.height - 6
+      : unit.y - unit.height - 6;
+    const barW = drewSprite && meta ? meta.frame.width : unit.width;
+    drawHealthBar(unit.x, barY, barW, unit.hp, unit.maxHp);
+
+    const now = performance.now();
+    if (unit.debuffs.some(d => d.until > now)) {
+      ctx.fillStyle = '#9c27b0';
+      ctx.fillRect(unit.x - barW / 2, barY - 8, 6, 6);
+    }
+  }
 }
 
 function render() {
@@ -869,8 +1122,9 @@ function render() {
   drawCastle(SIDE.LEFT);
   drawCastle(SIDE.RIGHT);
 
-  // Sort by y for slight depth
-  const sorted = [...state.units].filter(u => u.alive).sort((a, b) => a.y - b.y);
+  const sorted = [...state.units]
+    .filter(u => u.alive || u.sprite?.dying)
+    .sort((a, b) => a.y - b.y);
   for (const unit of sorted) drawUnit(unit);
 
   for (const ft of floatingTexts) {
@@ -897,12 +1151,15 @@ function update(dt) {
   updateAI(dt);
 
   for (const unit of state.units) {
-    updateUnit(unit, dt);
+    if (unit.alive) updateUnit(unit, dt);
+    if (unit.alive || unit.sprite?.dying) updateUnitSprite(unit, dt);
   }
 
-  // Cull dead units (keep array small for 60 FPS with 50+ units)
+  updateCastleSpriteAnim(SIDE.LEFT, dt);
+  updateCastleSpriteAnim(SIDE.RIGHT, dt);
+
   if (state.units.some(u => !u.alive)) {
-    state.units = state.units.filter(u => u.alive);
+    state.units = state.units.filter(u => u.alive || (u.sprite?.dying && !u.sprite?.deathDone));
   }
 
   updateFloatingTexts(dt);
@@ -940,4 +1197,5 @@ document.getElementById('btn-play-again').addEventListener('click', () => {
 
 // Boot
 console.log('[PHASE 1] Tug of AI Wars loaded — pick a side to begin.');
+loadAllSprites();
 requestAnimationFrame(gameLoop);

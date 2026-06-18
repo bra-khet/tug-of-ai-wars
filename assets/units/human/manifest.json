@@ -1,6 +1,7 @@
 {
   "version": 1,
   "faction": "human",
+  "base": "base/base.json",
   "units": {
     "orc_warrior": {
       "combat": "orc_warrior/combat.json",

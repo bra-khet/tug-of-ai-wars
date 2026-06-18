@@ -1,0 +1,4 @@
+robot unit 1 is 80x64
+robot unit 2 is 80x64
+robot unit 3 is 80x64
+robot unit 4 is 80x80
