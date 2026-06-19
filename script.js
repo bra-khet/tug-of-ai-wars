@@ -47,6 +47,9 @@ const CONFIG = {
     remoteCastleDps: 4, // damage per second to enemy castle while alive
   },
 
+  // CHANGED: gameplay height is fixed; spawn bar extends below via viewport layout
+  viewport: { baseHeight: 540 },
+
   colors: {
     human: {
       primary: '#4caf50',
@@ -74,6 +77,35 @@ const CONFIG = {
     text: '#ffffff',
   },
 };
+
+// Dev-tunable runtime values — animation speeds, timing, economy (live-adjustable in dev menu)
+const TUNING = {
+  animation: {
+    speedMultiplier: 0.5,
+  },
+  resources: {
+    passivePerSecond: CONFIG.resources.passivePerSecond,
+    deathRefundPercent: CONFIG.resources.deathRefundPercent,
+    glazeBonusPerSecond: CONFIG.resources.glazeBonusPerSecond,
+    dataMinerSteal: CONFIG.resources.dataMinerSteal,
+  },
+  ai: {
+    thinkInterval: CONFIG.ai.thinkInterval,
+    waveChance: CONFIG.ai.waveChance,
+  },
+  agi: {
+    remoteCastleDps: CONFIG.agi.remoteCastleDps,
+  },
+  castle: {
+    maxHp: CONFIG.castle.maxHp,
+  },
+};
+
+function getSpriteFrameDuration(meta, frameKey) {
+  const frame = meta.frames[frameKey];
+  if (!frame) return 100 / TUNING.animation.speedMultiplier;
+  return frame.duration / TUNING.animation.speedMultiplier;
+}
 
 // Unit definitions per side — symmetric structure, asymmetric stats
 const UNIT_CATALOG = {
@@ -290,10 +322,11 @@ function advanceSpriteAnim(animState, meta, animName, dt) {
   const frame = meta.frames[frameKey];
   if (!frame) return 'missing';
 
+  const frameDuration = getSpriteFrameDuration(meta, frameKey);
   animState.elapsed += dt * 1000;
-  if (animState.elapsed < frame.duration) return 'playing';
+  if (animState.elapsed < frameDuration) return 'playing';
 
-  animState.elapsed -= frame.duration;
+  animState.elapsed -= frameDuration;
   animState.frameIndex += 1;
 
   if (animState.frameIndex < frameKeys.length) return 'playing';
@@ -409,6 +442,15 @@ const resourceValueEl = document.getElementById('resource-value');
 const resourceRateEl = document.getElementById('resource-rate');
 const hudEnemyCastle = document.getElementById('hud-enemy-castle');
 const hudAgi = document.getElementById('hud-agi');
+const devMenuRoot = document.getElementById('dev-menu-root');
+const devMenuToggle = document.getElementById('dev-menu-toggle');
+const devMenuPanels = document.getElementById('dev-menu-panels');
+const devPanelUnits = document.getElementById('dev-panel-units');
+const devPanelGlobal = document.getElementById('dev-panel-global');
+
+let devUnlocked = false;
+let devPanelsOpen = false;
+let devPanelsBuilt = false;
 
 // =============================================================================
 // GAME STATE
@@ -450,6 +492,107 @@ function getCatalog(faction) {
   return UNIT_CATALOG[faction];
 }
 
+function updateViewportLayout() {
+  const gameHeight = CONFIG.viewport.baseHeight;
+  const topPad = Math.max(16, (window.innerHeight - gameHeight) / 2);
+  document.documentElement.style.setProperty('--viewport-top-pad', `${topPad}px`);
+  document.documentElement.style.setProperty('--game-height', `${gameHeight}px`);
+}
+
+function hideDevMenu() {
+  devUnlocked = false;
+  devPanelsOpen = false;
+  devMenuRoot.classList.add('hidden');
+  devMenuPanels.classList.add('hidden');
+}
+
+function bindDevNumberInput(input, onChange) {
+  input.addEventListener('change', () => {
+    const val = parseFloat(input.value);
+    if (!Number.isNaN(val)) onChange(val);
+  });
+}
+
+function buildDevPanels() {
+  if (devPanelsBuilt) return;
+  devPanelsBuilt = true;
+
+  const unitFields = [
+    ['hp', 'HP'], ['damage', 'Damage'], ['speed', 'Speed'], ['cost', 'Cost'],
+    ['range', 'Range'], ['castleDamage', 'Castle Dmg'], ['attackCooldown', 'Atk CD'],
+  ];
+
+  for (const [factionKey, catalog] of Object.entries(UNIT_CATALOG)) {
+    for (const [unitKey, def] of Object.entries(catalog.units)) {
+      const group = document.createElement('div');
+      group.className = 'dev-unit-group';
+      group.innerHTML = `<div class="dev-unit-name">${factionKey} / ${def.name}</div>`;
+
+      for (const [prop, label] of unitFields) {
+        if (def[prop] == null) continue;
+        const field = document.createElement('div');
+        field.className = 'dev-field';
+        const inputId = `dev-${factionKey}-${unitKey}-${prop}`;
+        field.innerHTML = `<label for="${inputId}">${label}</label>`;
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.id = inputId;
+        input.step = prop === 'attackCooldown' ? '0.05' : '1';
+        input.value = def[prop];
+        bindDevNumberInput(input, (val) => { def[prop] = val; });
+        field.appendChild(input);
+        group.appendChild(field);
+      }
+      devPanelUnits.appendChild(group);
+    }
+  }
+
+  const globalFields = [
+    { label: 'Anim speed mult', path: ['animation', 'speedMultiplier'], step: '0.05', val: TUNING.animation.speedMultiplier },
+    { label: 'Passive res/s', path: ['resources', 'passivePerSecond'], step: '0.5', val: TUNING.resources.passivePerSecond },
+    { label: 'Death refund %', path: ['resources', 'deathRefundPercent'], step: '0.05', val: TUNING.resources.deathRefundPercent },
+    { label: 'Glaze bonus/s', path: ['resources', 'glazeBonusPerSecond'], step: '0.5', val: TUNING.resources.glazeBonusPerSecond },
+    { label: 'Data miner steal', path: ['resources', 'dataMinerSteal'], step: '1', val: TUNING.resources.dataMinerSteal },
+    { label: 'AI think interval', path: ['ai', 'thinkInterval'], step: '0.1', val: TUNING.ai.thinkInterval },
+    { label: 'AI wave chance', path: ['ai', 'waveChance'], step: '0.01', val: TUNING.ai.waveChance },
+    { label: 'AGI castle DPS', path: ['agi', 'remoteCastleDps'], step: '0.5', val: TUNING.agi.remoteCastleDps },
+    { label: 'Castle max HP', path: ['castle', 'maxHp'], step: '50', val: TUNING.castle.maxHp },
+  ];
+
+  for (const spec of globalFields) {
+    const field = document.createElement('div');
+    field.className = 'dev-field';
+    const inputId = `dev-global-${spec.path.join('-')}`;
+    field.innerHTML = `<label for="${inputId}">${spec.label}</label>`;
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.id = inputId;
+    input.step = spec.step;
+    input.value = spec.val;
+    bindDevNumberInput(input, (val) => {
+      TUNING[spec.path[0]][spec.path[1]] = val;
+      if (spec.path[0] === 'castle' && spec.path[1] === 'maxHp') {
+        CONFIG.castle.maxHp = val;
+        for (const side of [SIDE.LEFT, SIDE.RIGHT]) {
+          const ratio = state.castles[side].hp / state.castles[side].maxHp;
+          state.castles[side].maxHp = val;
+          state.castles[side].hp = Math.min(val, state.castles[side].hp || val * ratio);
+        }
+      }
+    });
+    field.appendChild(input);
+    devPanelGlobal.appendChild(field);
+  }
+}
+
+function unlockDevMenu() {
+  if (gameState !== 'playing') return;
+  devUnlocked = true;
+  buildDevPanels();
+  devMenuRoot.classList.remove('hidden');
+  console.log('[DEV] Menu unlocked — toggle with DEV button (top-right)');
+}
+
 function spawnXForSide(side) {
   const c = CONFIG.castle;
   return side === SIDE.LEFT ? c.leftX + c.width + 8 : c.rightX - 8;
@@ -460,8 +603,9 @@ function directionForSide(side) {
 }
 
 function resetGame() {
-  state.castles.left = { hp: CONFIG.castle.maxHp, maxHp: CONFIG.castle.maxHp, agiShield: 0 };
-  state.castles.right = { hp: CONFIG.castle.maxHp, maxHp: CONFIG.castle.maxHp, agiShield: 0 };
+  const maxHp = TUNING.castle.maxHp;
+  state.castles.left = { hp: maxHp, maxHp, agiShield: 0 };
+  state.castles.right = { hp: maxHp, maxHp, agiShield: 0 };
   state.resources.left = CONFIG.resources.startAmount;
   state.resources.right = CONFIG.resources.startAmount;
   state.units = [];
@@ -484,6 +628,7 @@ function startGame(chosenSide) {
   spawnPanel.classList.remove('hidden');
   hud.classList.remove('hidden');
   buildSpawnUI();
+  requestAnimationFrame(() => updateViewportLayout());
   console.log('[PHASE 1] Game started — player:', playerSide, state.playerFaction);
 }
 
@@ -499,6 +644,8 @@ function endGame(winnerSide) {
   gameoverScreen.classList.add('active');
   spawnPanel.classList.add('hidden');
   hud.classList.add('hidden');
+  hideDevMenu();
+  updateViewportLayout();
 }
 
 // =============================================================================
@@ -562,7 +709,7 @@ function spendResources(side, amount) {
 }
 
 function refundOnDeath(unit) {
-  const refund = Math.floor(unit.cost * CONFIG.resources.deathRefundPercent);
+  const refund = Math.floor(unit.cost * TUNING.resources.deathRefundPercent);
   state.resources[unit.side] += refund;
   addFloatingText(unit.x, unit.y - 20, `+${refund}`, '#ffeb3b');
 }
@@ -727,8 +874,8 @@ function attackUnit(attacker, target, dt) {
   // Data Miner special
   if (attacker.def.role === 'debuffer') {
     applyDebuff(target, 'healingReduction', attacker.def.debuffDuration, attacker.def.healingReduction);
-    state.resources[attacker.side] += CONFIG.resources.dataMinerSteal;
-    addFloatingText(attacker.x, attacker.y - 24, `+${CONFIG.resources.dataMinerSteal}`, '#ce93d8');
+    state.resources[attacker.side] += TUNING.resources.dataMinerSteal;
+    addFloatingText(attacker.x, attacker.y - 24, `+${TUNING.resources.dataMinerSteal}`, '#ce93d8');
   }
 
   if (target.hp <= 0) {
@@ -743,7 +890,7 @@ function updateUnit(unit, dt) {
   if (unit.isAgi) {
     const enemy = enemySide(unit.side);
     const castle = state.castles[enemy];
-    const dps = CONFIG.agi.remoteCastleDps * dt;
+    const dps = TUNING.agi.remoteCastleDps * dt;
     if (castle.agiShield > 0) {
       castle.agiShield = Math.max(0, castle.agiShield - dps);
       unit.agiShield = castle.agiShield;
@@ -804,10 +951,10 @@ function updateUnit(unit, dt) {
 // RESOURCE TICK — PHASE 1
 // =============================================================================
 function getResourceRate(side) {
-  let rate = CONFIG.resources.passivePerSecond;
+  let rate = TUNING.resources.passivePerSecond;
   for (const u of state.units) {
     if (u.alive && u.side === side && u.def.role === 'support' && u.supportActive) {
-      rate += CONFIG.resources.glazeBonusPerSecond;
+      rate += TUNING.resources.glazeBonusPerSecond;
     }
   }
   return rate;
@@ -868,7 +1015,7 @@ function aiChooseSpawn(aiSide) {
   }
 
   // Wave: spam cheap units
-  if (Math.random() < CONFIG.ai.waveChance) {
+  if (Math.random() < TUNING.ai.waveChance) {
     const cheap = keys.find(k => catalog.units[k].cost <= 20 && res >= catalog.units[k].cost);
     if (cheap) return cheap;
   }
@@ -888,7 +1035,7 @@ function updateAI(dt) {
   const aiSide = enemySide(playerSide);
   state.aiTimer -= dt;
   if (state.aiTimer > 0) return;
-  state.aiTimer = CONFIG.ai.thinkInterval + Math.random() * 1.2;
+  state.aiTimer = TUNING.ai.thinkInterval + Math.random() * 1.2;
 
   const choice = aiChooseSpawn(aiSide);
   if (choice) {
@@ -1010,18 +1157,25 @@ function drawCastle(side) {
 
 function drawGround() {
   const { width, height } = CONFIG.canvas;
+  const groundY = CONFIG.castle.groundY;
+
+  // BUG FIX: uncleared mid-screen band left entity artifacts
+  // Fix: redraw the full viewport background every frame (sky + transition + ground)
   ctx.fillStyle = CONFIG.colors.sky;
-  ctx.fillRect(0, 0, width, CONFIG.castle.groundY - 40);
-  // Simple pixel clouds
+  ctx.fillRect(0, 0, width, groundY - 60);
+
+  ctx.fillStyle = '#6b8f5a';
+  ctx.fillRect(0, groundY - 60, width, 60);
+
+  ctx.fillStyle = CONFIG.colors.ground;
+  ctx.fillRect(0, groundY, width, height - groundY);
+
   ctx.fillStyle = '#fff';
   ctx.fillRect(120, 60, 48, 12);
   ctx.fillRect(140, 52, 32, 12);
   ctx.fillRect(600, 80, 56, 12);
   ctx.fillRect(620, 72, 40, 12);
 
-  ctx.fillStyle = CONFIG.colors.ground;
-  ctx.fillRect(0, CONFIG.castle.groundY, width, height - CONFIG.castle.groundY);
-  // Lane line
   ctx.fillStyle = '#2e4d24';
   ctx.fillRect(0, CONFIG.lane.y + 14, width, 4);
 }
@@ -1118,6 +1272,8 @@ function drawUnit(unit) {
 }
 
 function render() {
+  const { width, height } = CONFIG.canvas;
+  ctx.clearRect(0, 0, width, height);
   drawGround();
   drawCastle(SIDE.LEFT);
   drawCastle(SIDE.RIGHT);
@@ -1193,9 +1349,27 @@ document.getElementById('btn-play-again').addEventListener('click', () => {
   titleScreen.classList.add('active');
   spawnPanel.classList.add('hidden');
   hud.classList.add('hidden');
+  hideDevMenu();
+  updateViewportLayout();
 });
+
+devMenuToggle.addEventListener('click', () => {
+  if (!devUnlocked) return;
+  devPanelsOpen = !devPanelsOpen;
+  devMenuPanels.classList.toggle('hidden', !devPanelsOpen);
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Backquote' && gameState === 'playing') {
+    e.preventDefault();
+    unlockDevMenu();
+  }
+});
+
+window.addEventListener('resize', updateViewportLayout);
 
 // Boot
 console.log('[PHASE 1] Tug of AI Wars loaded — pick a side to begin.');
+updateViewportLayout();
 loadAllSprites();
 requestAnimationFrame(gameLoop);

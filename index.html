@@ -16,6 +16,20 @@
         <span id="hud-agi" class="hidden">AGI Shield: ---</span>
       </div>
 
+      <div id="dev-menu-root" class="dev-menu-root hidden">
+        <button id="dev-menu-toggle" type="button" class="dev-menu-toggle" title="Developer panels">DEV</button>
+        <div id="dev-menu-panels" class="dev-menu-panels hidden">
+          <div class="dev-panel">
+            <h3 class="dev-panel-title">Unit Stats</h3>
+            <div id="dev-panel-units" class="dev-panel-body"></div>
+          </div>
+          <div class="dev-panel">
+            <h3 class="dev-panel-title">Game &amp; Animation</h3>
+            <div id="dev-panel-global" class="dev-panel-body"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Title / side select / game over overlays -->
       <div id="overlay" class="overlay visible">
       <div id="title-screen" class="screen active">
